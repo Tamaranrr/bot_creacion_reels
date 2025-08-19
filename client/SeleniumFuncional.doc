@@ -1,0 +1,142 @@
+import undetected_chromedriver as uc
+from pathlib import Path
+import os
+import time
+import psutil
+
+# Configuración del perfil de Chrome
+CHROME_EXECUTABLE_PATH = "C:/Program Files/Google/Chrome/Application/chrome.exe"
+CHROME_USER_DATA_DIR = "C:/Users/programador2/AppData/Local/Google/Chrome/User Data"
+CHROME_PROFILE_NAME = "Profile 1"
+DOWNLOADS_PATH = Path.home() / "Downloads"
+
+class SeleniumClient:
+    def __init__(self, headless=False):
+        self.headless = headless
+        self.driver = None
+
+    def cerrar_chrome(self):
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if proc.info['name'] and "chrome" in proc.info['name'].lower():
+                    proc.kill()
+                    print(f"🛑 Chrome cerrado: PID {proc.pid}")
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+    def start_browser(self):
+        self.cerrar_chrome()
+        time.sleep(2)
+
+        options = uc.ChromeOptions()
+        options.binary_location = CHROME_EXECUTABLE_PATH
+        options.add_argument(f"--user-data-dir={CHROME_USER_DATA_DIR}")
+        options.add_argument(f"--profile-directory={CHROME_PROFILE_NAME}")
+        options.add_argument("--start-maximized")
+        options.add_argument("--lang=en-US")
+
+        # ✅ Fingerprint y detección anti-bot
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        
+        options.add_argument("--disable-features=VizDisplayCompositor")
+        options.add_argument("--enable-features=NetworkService,NetworkServiceInProcess")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--window-position=0,0")
+        options.add_argument("--disable-infobars")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-default-apps")
+        
+        # Añadidos nuevos 
+        
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-background-networking")
+        options.add_argument("--disable-client-side-phishing-detection")
+        options.add_argument("--disable-sync")
+        options.add_argument("--metrics-recording-only")
+        options.add_argument("--safebrowsing-disable-auto-update")
+        options.add_argument("--password-store=basic")
+        options.add_argument("--use-mock-keychain")
+        options.add_argument("--autoplay-policy=no-user-gesture-required")
+        options.add_argument("--force-color-profile=srgb")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-renderer-backgrounding")
+        
+        
+        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+        
+
+        # ✅ Preferencias
+        options.add_experimental_option("prefs", {
+            "download.default_directory": str(DOWNLOADS_PATH),
+            "profile.default_content_setting_values.automatic_downloads": 1,
+            "download.prompt_for_download": False,
+            "profile.default_content_setting_values.notifications": 2
+        })
+
+        if self.headless:
+            options.add_argument("--headless=new")
+
+        try:
+            print("🚀 Iniciando Chrome con el perfil definido...")
+            self.driver = uc.Chrome(
+                options=options,
+                use_subprocess=True
+            )
+
+            # ✅ Inyección anti-bot
+            self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": """
+                    // Ocultar webdriver
+                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+                    // Idiomas falsos
+                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+
+                    // Plugins simulados
+                    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+
+                    // Plataforma
+                    Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+
+                    // Hardware simulado
+                    Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+                    Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+
+                    // Chrome runtime simulado
+                    window.navigator.chrome = { runtime: {} };
+
+                    // Permissions API
+                    Object.defineProperty(navigator, 'permissions', {
+                        get: () => ({
+                            query: (parameters) => (
+                                parameters.name === 'notifications'
+                                    ? Promise.resolve({ state: Notification.permission })
+                                    : Promise.resolve({ state: 'denied' })
+                            )
+                        })
+                    });
+
+                    // Fake WebGL vendor
+                    const getParameter = WebGLRenderingContext.prototype.getParameter;
+                    WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                        if (parameter === 37445) return 'Intel Inc.'; // UNMASKED_VENDOR_WEBGL
+                        if (parameter === 37446) return 'Intel Iris OpenGL Engine'; // UNMASKED_RENDERER_WEBGL
+                        return getParameter(parameter);
+                    };
+
+                    // Fake userAgent
+                    Object.defineProperty(navigator, 'userAgent', {
+                        get: () => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
+                    });
+                """
+            })
+
+            print("✅ Chrome iniciado correctamente.")
+        except Exception as e:
+            print(f"❌ Error al iniciar Chrome: {e}")
+            self.driver = None
+
+        return self.driver

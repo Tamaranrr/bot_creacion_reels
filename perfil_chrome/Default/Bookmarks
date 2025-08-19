@@ -1,0 +1,47 @@
+{
+   "checksum": "483688b3bd562f8a78c7ec8b830c6097",
+   "roots": {
+      "bookmark_bar": {
+         "children": [  ],
+         "date_added": "13397254424446040",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Barra de favoritos",
+         "type": "folder"
+      },
+      "other": {
+         "children": [ {
+            "date_added": "13397254514295170",
+            "date_last_used": "0",
+            "guid": "8edae739-8973-423f-869c-f777f5a3d1d1",
+            "id": "5",
+            "meta_info": {
+               "power_bookmark_meta": ""
+            },
+            "name": "Sign In - Captions",
+            "type": "url",
+            "url": "https://desktop.captions.ai/login?callbackUrl=%2Fprojects"
+         } ],
+         "date_added": "13397254424446040",
+         "date_last_used": "0",
+         "date_modified": "13397254514295170",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Otros favoritos",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13397254424446040",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Favoritos del dispositivo",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}
